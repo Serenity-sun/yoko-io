@@ -15,7 +15,38 @@ class BookController extends Controller
         readonly BookService $service
     ){}
 
-    public function index(Request $request)
+    /**
+     * @param Request $request
+     * @return array
+     * @throws HttpClientException
+     */
+    public function index(Request $request): array
     {
+        $requestData = $request->all();
+
+        if (isset($requestData['data'])) {
+            $requestData = $requestData['data'];
+        }
+
+        foreach ($requestData as $data) {
+            $validator = Validator::make($data, [
+                'title' => 'string',
+                'name' => 'string',
+                'description' => 'string',
+                'descr' => 'string',
+                'createdAt' => 'date',
+                'author' => 'string',
+
+                'title_or_name' => 'required_without_all:title,name',
+                'description_or_descr' => 'required_without_all:description,descr',
+                'createdAt_or_author' => 'required_without_all:createdAt,author',
+            ]);
+
+            if($validator->fails()) {
+                throw new HttpClientException($validator->errors()->first(), 422);
+            }
+        }
+
+        return $this->service->getBooks($requestData);
     }
 }
